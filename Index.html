@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グリーンNH₃監視システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0e1a;
+            color: #e0e6ed;
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* タイトルバナー */
+        #title-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a4d3c 0%, #1a7a5e 50%, #2d9d78 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeOut 0.8s ease-out 2.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        #title-banner h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        #title-banner .subtitle {
+            font-size: 1.8rem;
+            color: #c8f4e8;
+            font-weight: 300;
+            animation: slideUp 0.8s ease-out 0.3s backwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* メインコンテンツ */
+        #main-content {
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out 3.3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ヘッダー */
+        .header {
+            background: linear-gradient(135deg, #0d5943 0%, #1a7a5e 100%);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #2d9d78;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-item {
+            color: #c8f4e8;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .status-bar {
+            background: #141b2d;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .status-value {
+            color: #e0e6ed;
+            font-weight: 600;
+        }
+
+        /* メインダッシュボード */
+        .dashboard {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #141b2d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #1e293b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* アラートカード */
+        .alert-card {
+            grid-column: span 4;
+        }
+
+        .alert-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .alert-critical {
+            background: rgba(239, 68, 68, 0.15);
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-critical.blinking {
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .alert-warning {
+            background: rgba(251, 191, 36, 0.15);
+            border-left: 4px solid #fbbf24;
+        }
+
+        .alert-normal {
+            background: rgba(34, 197, 94, 0.15);
+            border-left: 4px solid #22c55e;
+        }
+
+        .alert-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .indicator-red {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        .indicator-yellow {
+            background: #fbbf24;
+            box-shadow: 0 0 10px #fbbf24;
+        }
+
+        .indicator-green {
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        .alert-info {
+            flex: 1;
+        }
+
+        .alert-location {
+            font-weight: 600;
+            color: #e0e6ed;
+            margin-bottom: 0.3rem;
+        }
+
+        .alert-message {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* メトリクスカード */
+        .metrics-card {
+            grid-column: span 8;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d9d78;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .metric-change {
+            font-size: 0.75rem;
+            margin-top: 0.3rem;
+        }
+
+        .change-positive {
+            color: #22c55e;
+        }
+
+        .change-negative {
+            color: #ef4444;
+        }
+
+        /* グラフエリア */
+        .chart-card {
+            grid-column: span 8;
+            height: 350px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin-top: 1rem;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* センサーステータス */
+        .sensor-card {
+            grid-column: span 4;
+        }
+
+        .sensor-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .sensor-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+        }
+
+        .sensor-name {
+            color: #e0e6ed;
+            font-weight: 500;
+        }
+
+        .sensor-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sensor-reading {
+            font-weight: 600;
+            color: #2d9d78;
+        }
+
+        .sensor-unit {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* 配管マップ */
+        .map-card {
+            grid-column: span 12;
+            height: 500px;
+        }
+
+        .pipeline-map {
+            position: relative;
+            height: 430px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .pipeline-segment {
+            position: absolute;
+            background: #2d9d78;
+            transition: all 0.3s;
+        }
+
+        .pipeline-segment.warning {
+            background: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+        }
+
+        .pipeline-segment.critical {
+            background: #ef4444;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .sensor-marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2d9d78;
+            border: 2px solid #141b2d;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .sensor-marker:hover {
+            transform: scale(1.5);
+            box-shadow: 0 0 15px rgba(45, 157, 120, 0.8);
+            z-index: 20;
+        }
+
+        .sensor-marker.warning {
+            background: #fbbf24;
+        }
+
+        .sensor-marker.critical {
+            background: #ef4444;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .pipeline-label {
+            position: absolute;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 600;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .tank-label {
+            position: absolute;
+            background: rgba(45, 157, 120, 0.2);
+            border: 2px solid #2d9d78;
+            border-radius: 6px;
+            padding: 0.5rem 0.8rem;
+            color: #e0e6ed;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .sensor-tooltip {
+            position: absolute;
+            background: #141b2d;
+            border: 1px solid #2d9d78;
+            border-radius: 4px;
+            padding: 0.5rem 0.7rem;
+            color: #e0e6ed;
+            font-size: 0.75rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* サブページ */
+        .subpage {
+            display: none;
+            padding: 2rem;
+        }
+
+        .subpage.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            text-align: left;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #1e293b;
+            color: #e0e6ed;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .report-section {
+            grid-column: span 12;
+        }
+
+        .report-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1a7a5e 0%, #2d9d78 100%);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(45, 157, 120, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e6ed;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .report-output {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+            display: none;
+        }
+
+        .report-output.show {
+            display: block;
+        }
+
+        .report-header {
+            border-bottom: 2px solid #2d9d78;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-title {
+            font-size: 1.5rem;
+            color: #e0e6ed;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-meta {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .report-content {
+            line-height: 1.8;
+        }
+
+        .report-section-title {
+            font-size: 1.2rem;
+            color: #2d9d78;
+            margin: 1.5rem 0 0.8rem 0;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d9d78;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .stats-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .stat-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-row-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .stat-row-value {
+            color: #e0e6ed;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- タイトルバナー -->
+    <div id="title-banner">
+        <h1>グリーンNH₃監視システム</h1>
+        <div class="subtitle">AI腐食・漏えい検知プラットフォーム</div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div id="main-content">
+        <!-- ヘッダー -->
+        <div class="header">
+            <div class="logo">グリーンNH₃監視システム</div>
+            <div class="nav">
+                <div class="nav-item active" data-page="dashboard">ダッシュボード</div>
+                <div class="nav-item" data-page="analysis">解析</div>
+                <div class="nav-item" data-page="reports">レポート</div>
+                <div class="nav-item" data-page="settings">設定</div>
+            </div>
+        </div>
+
+        <!-- ステータスバー -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">現在日時</span>
+                <span class="status-value" id="current-datetime">2025-11-03 14:30:45</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">システム稼働時間</span>
+                <span class="status-value" id="uptime">248日 12時間</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">監視センサー数</span>
+                <span class="status-value">128台</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">最終更新</span>
+                <span class="status-value" id="last-update">2秒前</span>
+            </div>
+        </div>
+
+        <!-- ダッシュボード -->
+        <div id="page-dashboard" class="subpage active">
+            <div class="dashboard">
+                <!-- アラート -->
+                <div class="card alert-card">
+                    <div class="card-title">リアルタイムアラート</div>
+                    <div id="alerts-container"></div>
+                </div>
+
+                <!-- メトリクス -->
+                <div class="card" style="grid-column: span 8;">
+                    <div class="card-title">稼働状況サマリー</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
+                        <div class="metric-item">
+                            <div class="metric-value" id="metric-detection">0</div>
+                            <div class="metric-label">検知件数/日</div>
+                            <div class="metric-change change-positive" id="change-detection">+0%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="metric-response">0</div>
+                            <div class="metric-label">平均応答時間</div>
+                            <div class="metric-change change-positive" id="change-response">-0%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="metric-accuracy">0%</div>
+                            <div class="metric-label">AI精度</div>
+                            <div class="metric-change change-positive" id="change-accuracy">+0%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="metric-prevention">0</div>
+                            <div class="metric-label">事故防止件数</div>
+                            <div class="metric-change change-positive" id="change-prevention">+0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- グラフ1 -->
+                <div class="card chart-card">
+                    <div class="card-title">腐食進行モニタリング（リアルタイム）</div>
+                    <div class="chart-container">
+                        <canvas id="corrosion-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- センサーステータス -->
+                <div class="card sensor-card">
+                    <div class="card-title">センサーステータス</div>
+                    <div class="sensor-list" id="sensor-list"></div>
+                </div>
+
+                <!-- グラフ2 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">圧力変動トレンド</div>
+                    <div class="chart-container">
+                        <canvas id="pressure-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- グラフ3 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">温度分布解析</div>
+                    <div class="chart-container">
+                        <canvas id="temperature-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- 配管マップ -->
+                <div class="card map-card">
+                    <div class="card-title">配管システムマップ - 配管総延長 2.8km / 監視ポイント 128箇所</div>
+                    <div class="pipeline-map" id="pipeline-map"></div>
+                </div>
+
+                <!-- 詳細統計 -->
+                <div class="card" style="grid-column: span 4;">
+                    <div class="card-title">検知統計</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">本日の検知</span>
+                            <span class="stat-row-value" id="stat-today">7件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">今週の検知</span>
+                            <span class="stat-row-value" id="stat-week">42件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">今月の検知</span>
+                            <span class="stat-row-value" id="stat-month">178件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">誤検知率</span>
+                            <span class="stat-row-value" id="stat-false">1.6%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">平均修復時間</span>
+                            <span class="stat-row-value" id="stat-repair">4.2h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI学習状況 -->
+                <div class="card" style="grid-column: span 4;">
+                    <div class="card-title">AI学習状況</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">学習データ量</span>
+                            <span class="stat-row-value" id="ai-data">1,247,583件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">モデルバージョン</span>
+                            <span class="stat-row-value">v3.2.8</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">最終学習</span>
+                            <span class="stat-row-value">2時間前</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">予測精度</span>
+                            <span class="stat-row-value" id="ai-accuracy">98.4%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">改善率（前月比）</span>
+                            <span class="stat-row-value change-positive">+2.3%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- コンプライアンス -->
+                <div class="card" style="grid-column: span 4;">
+                    <div class="card-title">コンプライアンス</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">高圧ガス保安法</span>
+                            <span class="stat-row-value" style="color: #22c55e;">準拠</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">自動報告</span>
+                            <span class="stat-row-value" style="color: #22c55e;">有効</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">今月の報告</span>
+                            <span class="stat-row-value">12件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">次回点検</span>
+                            <span class="stat-row-value">18日後</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">監査適合率</span>
+                            <span class="stat-row-value">100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 解析ページ -->
+        <div id="page-analysis" class="subpage">
+            <div class="dashboard">
+                <!-- 解析サマリー -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">解析サマリー</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">総分析データ</span>
+                            <span class="stat-row-value">1.2M件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">異常検知</span>
+                            <span class="stat-row-value" style="color: #fbbf24;">12件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">要注意箇所</span>
+                            <span class="stat-row-value" style="color: #ef4444;">3箇所</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 腐食分布 -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">腐食率分布</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">0-30%（正常）</span>
+                            <span class="stat-row-value" style="color: #22c55e;">89箇所</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">31-60%（注意）</span>
+                            <span class="stat-row-value" style="color: #fbbf24;">32箇所</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">61%以上（警告）</span>
+                            <span class="stat-row-value" style="color: #ef4444;">7箇所</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 予測保全 -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">予測保全</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">30日以内要交換</span>
+                            <span class="stat-row-value" style="color: #ef4444;">2件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">90日以内要点検</span>
+                            <span class="stat-row-value" style="color: #fbbf24;">8件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">コスト削減予測</span>
+                            <span class="stat-row-value" style="color: #22c55e;">¥2.4M</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- パフォーマンス -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">システム効率</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">データ処理速度</span>
+                            <span class="stat-row-value">847ms</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">検知遅延</span>
+                            <span class="stat-row-value">0.3s</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">従来比改善</span>
+                            <span class="stat-row-value change-positive">60%↑</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 詳細データテーブル -->
+                <div class="card" style="grid-column: span 12;">
+                    <div class="card-title">センサー詳細解析データ</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>センサーID</th>
+                                <th>位置</th>
+                                <th>腐食率</th>
+                                <th>圧力</th>
+                                <th>温度</th>
+                                <th>NH₃濃度</th>
+                                <th>振動</th>
+                                <th>ステータス</th>
+                                <th>AI信頼度</th>
+                                <th>最終点検</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analysis-table"></tbody>
+                    </table>
+                </div>
+
+                <!-- トレンドグラフ -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">週次トレンド分析</div>
+                    <div class="chart-container">
+                        <canvas id="weekly-trend-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- 相関分析 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">パラメータ相関マップ</div>
+                    <div class="chart-container">
+                        <canvas id="correlation-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- リスクマトリクス -->
+                <div class="card" style="grid-column: span 12;">
+                    <div class="card-title">リスクアセスメントマトリクス</div>
+                    <div style="padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 6px; margin-top: 1rem;">
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+                            <div style="background: #22c55e; padding: 1rem; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 700;">89</div>
+                                <div style="font-size: 0.8rem; margin-top: 0.3rem;">低リスク</div>
+                            </div>
+                            <div style="background: #86efac; padding: 1rem; border-radius: 4px; text-align: center; color: #0a0e1a;">
+                                <div style="font-size: 1.5rem; font-weight: 700;">18</div>
+                                <div style="font-size: 0.8rem; margin-top: 0.3rem;">やや低</div>
+                            </div>
+                            <div style="background: #fbbf24; padding: 1rem; border-radius: 4px; text-align: center; color: #0a0e1a;">
+                                <div style="font-size: 1.5rem; font-weight: 700;">14</div>
+                                <div style="font-size: 0.8rem; margin-top: 0.3rem;">中リスク</div>
+                            </div>
+                            <div style="background: #fb923c; padding: 1rem; border-radius: 4px; text-align: center; color: #0a0e1a;">
+                                <div style="font-size: 1.5rem; font-weight: 700;">5</div>
+                                <div style="font-size: 0.8rem; margin-top: 0.3rem;">やや高</div>
+                            </div>
+                            <div style="background: #ef4444; padding: 1rem; border-radius: 4px; text-align: center;">
+                                <div style="font-size: 1.5rem; font-weight: 700;">2</div>
+                                <div style="font-size: 0.8rem; margin-top: 0.3rem;">高リスク</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- レポートページ -->
+        <div id="page-reports" class="subpage">
+            <div class="dashboard">
+                <!-- レポート統計 -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">レポート統計</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">今月生成数</span>
+                            <span class="stat-row-value">87件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">自動送信</span>
+                            <span class="stat-row-value">87件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">送信成功率</span>
+                            <span class="stat-row-value">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- コンプライアンス状況 -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">法令準拠状況</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">高圧ガス保安法</span>
+                            <span class="stat-row-value" style="color: #22c55e;">準拠</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">報告遅延</span>
+                            <span class="stat-row-value">0件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">監査合格率</span>
+                            <span class="stat-row-value">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配信先 -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">配信先管理</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">登録メールアドレス</span>
+                            <span class="stat-row-value">12件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">API連携</span>
+                            <span class="stat-row-value">3件</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">クラウドストレージ</span>
+                            <span class="stat-row-value" style="color: #22c55e;">有効</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- スケジュール -->
+                <div class="card" style="grid-column: span 3;">
+                    <div class="card-title">次回レポート</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">日次レポート</span>
+                            <span class="stat-row-value">6時間後</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">週次レポート</span>
+                            <span class="stat-row-value">3日後</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">月次レポート</span>
+                            <span class="stat-row-value">18日後</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- レポート生成 -->
+                <div class="card report-section">
+                    <div class="card-title">レポート生成・出力</div>
+                    <div class="report-controls">
+                        <button class="btn btn-primary" onclick="generateReport('daily')">日次レポート生成</button>
+                        <button class="btn btn-primary" onclick="generateReport('weekly')">週次レポート生成</button>
+                        <button class="btn btn-primary" onclick="generateReport('monthly')">月次レポート生成</button>
+                        <button class="btn btn-primary" onclick="generateReport('compliance')">コンプライアンスレポート</button>
+                        <button class="btn btn-secondary" onclick="exportReport()">PDF出力</button>
+                        <button class="btn btn-secondary" onclick="exportReport()">Excel出力</button>
+                        <button class="btn btn-secondary" onclick="exportReport()">API送信</button>
+                    </div>
+                    <div class="report-output" id="report-output"></div>
+                </div>
+
+                <!-- レポート履歴 -->
+                <div class="card" style="grid-column: span 12;">
+                    <div class="card-title">レポート生成履歴</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>生成日時</th>
+                                <th>レポート種別</th>
+                                <th>対象期間</th>
+                                <th>ファイル形式</th>
+                                <th>配信状況</th>
+                                <th>ダウンロード</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-11-03 08:00</td>
+                                <td>日次監視レポート</td>
+                                <td>2025-11-02</td>
+                                <td>PDF</td>
+                                <td style="color: #22c55e;">配信済</td>
+                                <td><span style="color: #2d9d78; cursor: pointer;">ダウンロード</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-11-02 08:00</td>
+                                <td>日次監視レポート</td>
+                                <td>2025-11-01</td>
+                                <td>PDF</td>
+                                <td style="color: #22c55e;">配信済</td>
+                                <td><span style="color: #2d9d78; cursor: pointer;">ダウンロード</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-11-01 08:00</td>
+                                <td>月次総合レポート</td>
+                                <td>2025-10</td>
+                                <td>PDF + Excel</td>
+                                <td style="color: #22c55e;">配信済</td>
+                                <td><span style="color: #2d9d78; cursor: pointer;">ダウンロード</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-28 09:00</td>
+                                <td>週次分析レポート</td>
+                                <td>2025-10-21～27</td>
+                                <td>PDF</td>
+                                <td style="color: #22c55e;">配信済</td>
+                                <td><span style="color: #2d9d78; cursor: pointer;">ダウンロード</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-10-25 14:30</td>
+                                <td>コンプライアンスレポート</td>
+                                <td>Q3 2025</td>
+                                <td>PDF</td>
+                                <td style="color: #22c55e;">配信済</td>
+                                <td><span style="color: #2d9d78; cursor: pointer;">ダウンロード</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 配信分析 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">レポート配信推移</div>
+                    <div class="chart-container">
+                        <canvas id="report-trend-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- 閲覧統計 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">レポート閲覧統計</div>
+                    <div class="chart-container">
+                        <canvas id="report-view-chart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 設定ページ -->
+        <div id="page-settings" class="subpage">
+            <div class="dashboard">
+                <!-- システム情報 -->
+                <div class="card" style="grid-column: span 4;">
+                    <div class="card-title">システム情報</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">バージョン</span>
+                            <span class="stat-row-value">v3.2.8</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">稼働時間</span>
+                            <span class="stat-row-value">248日</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">稼働率</span>
+                            <span class="stat-row-value">99.8%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">ライセンス</span>
+                            <span class="stat-row-value">Enterprise</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- リソース使用状況 -->
+                <div class="card" style="grid-column: span 4;">
+                    <div class="card-title">リソース使用状況</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">CPU使用率</span>
+                            <span class="stat-row-value">42%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">メモリ使用率</span>
+                            <span class="stat-row-value">68%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">ストレージ</span>
+                            <span class="stat-row-value">2.4TB / 5TB</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">ネットワーク</span>
+                            <span class="stat-row-value" style="color: #22c55e;">正常</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- アップデート -->
+                <div class="card" style="grid-column: span 4;">
+                    <div class="card-title">アップデート</div>
+                    <div class="stats-detail">
+                        <div class="stat-row">
+                            <span class="stat-row-label">最新バージョン</span>
+                            <span class="stat-row-value">v3.2.8</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">最終更新</span>
+                            <span class="stat-row-value">7日前</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">次回点検</span>
+                            <span class="stat-row-value">18日後</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-row-label">自動更新</span>
+                            <span class="stat-row-value" style="color: #22c55e;">有効</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- センサー設定 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">センサー閾値設定</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>パラメータ</th>
+                                <th>注意閾値</th>
+                                <th>警告閾値</th>
+                                <th>単位</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>腐食率</td>
+                                <td>60%</td>
+                                <td>80%</td>
+                                <td>%</td>
+                            </tr>
+                            <tr>
+                                <td>圧力</td>
+                                <td>1.5 MPa</td>
+                                <td>1.8 MPa</td>
+                                <td>MPa</td>
+                            </tr>
+                            <tr>
+                                <td>温度</td>
+                                <td>35°C</td>
+                                <td>45°C</td>
+                                <td>°C</td>
+                            </tr>
+                            <tr>
+                                <td>NH₃濃度</td>
+                                <td>25 ppm</td>
+                                <td>50 ppm</td>
+                                <td>ppm</td>
+                            </tr>
+                            <tr>
+                                <td>振動</td>
+                                <td>5.0 mm/s</td>
+                                <td>8.0 mm/s</td>
+                                <td>mm/s</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- AI設定 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">AI学習パラメータ</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>パラメータ</th>
+                                <th>現在値</th>
+                                <th>推奨値</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>学習率</td>
+                                <td>0.001</td>
+                                <td>0.001</td>
+                                <td style="color: #22c55e;">最適</td>
+                            </tr>
+                            <tr>
+                                <td>バッチサイズ</td>
+                                <td>128</td>
+                                <td>128</td>
+                                <td style="color: #22c55e;">最適</td>
+                            </tr>
+                            <tr>
+                                <td>エポック数</td>
+                                <td>500</td>
+                                <td>500</td>
+                                <td style="color: #22c55e;">最適</td>
+                            </tr>
+                            <tr>
+                                <td>再学習間隔</td>
+                                <td>6時間</td>
+                                <td>6時間</td>
+                                <td style="color: #22c55e;">最適</td>
+                            </tr>
+                            <tr>
+                                <td>信頼度閾値</td>
+                                <td>95%</td>
+                                <td>95%</td>
+                                <td style="color: #22c55e;">最適</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 通知設定 -->
+                <div class="card" style="grid-column: span 12;">
+                    <div class="card-title">アラート・通知設定</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>通知タイプ</th>
+                                <th>優先度</th>
+                                <th>メール</th>
+                                <th>SMS</th>
+                                <th>アプリ</th>
+                                <th>自動対応</th>
+                                <th>エスカレーション</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>緊急アラート（腐食率80%以上）</td>
+                                <td style="color: #ef4444;">高</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>即時</td>
+                            </tr>
+                            <tr>
+                                <td>警告アラート（腐食率60-79%）</td>
+                                <td style="color: #fbbf24;">中</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>無効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>30分後</td>
+                            </tr>
+                            <tr>
+                                <td>圧力異常</td>
+                                <td style="color: #ef4444;">高</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>即時</td>
+                            </tr>
+                            <tr>
+                                <td>NH₃漏えい検知</td>
+                                <td style="color: #ef4444;">高</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>即時</td>
+                            </tr>
+                            <tr>
+                                <td>定期点検リマインド</td>
+                                <td style="color: #22c55e;">低</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>無効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>無効</td>
+                                <td>なし</td>
+                            </tr>
+                            <tr>
+                                <td>センサー異常</td>
+                                <td style="color: #fbbf24;">中</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>無効</td>
+                                <td style="color: #22c55e;">有効</td>
+                                <td>無効</td>
+                                <td>1時間後</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ユーザー管理 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">ユーザー・権限管理</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ユーザー名</th>
+                                <th>役割</th>
+                                <th>権限</th>
+                                <th>最終ログイン</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>管理者</td>
+                                <td>システム管理者</td>
+                                <td style="color: #ef4444;">全権限</td>
+                                <td>2時間前</td>
+                            </tr>
+                            <tr>
+                                <td>運用担当A</td>
+                                <td>運用オペレーター</td>
+                                <td style="color: #fbbf24;">監視・報告</td>
+                                <td>5時間前</td>
+                            </tr>
+                            <tr>
+                                <td>保全担当B</td>
+                                <td>保全エンジニア</td>
+                                <td style="color: #fbbf24;">監視・設定</td>
+                                <td>1日前</td>
+                            </tr>
+                            <tr>
+                                <td>閲覧者C</td>
+                                <td>一般ユーザー</td>
+                                <td style="color: #22c55e;">閲覧のみ</td>
+                                <td>3日前</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- API連携 -->
+                <div class="card" style="grid-column: span 6;">
+                    <div class="card-title">API連携設定</div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>連携先</th>
+                                <th>プロトコル</th>
+                                <th>ステータス</th>
+                                <th>最終同期</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>基幹システム</td>
+                                <td>REST API</td>
+                                <td style="color: #22c55e;">接続中</td>
+                                <td>1分前</td>
+                            </tr>
+                            <tr>
+                                <td>報告システム</td>
+                                <td>SOAP</td>
+                                <td style="color: #22c55e;">接続中</td>
+                                <td>5分前</td>
+                            </tr>
+                            <tr>
+                                <td>クラウドストレージ</td>
+                                <td>S3 API</td>
+                                <td style="color: #22c55e;">接続中</td>
+                                <td>30秒前</td>
+                            </tr>
+                            <tr>
+                                <td>監視ダッシュボード</td>
+                                <td>WebSocket</td>
+                                <td style="color: #22c55e;">接続中</td>
+                                <td>リアルタイム</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- バックアップ設定 -->
+                <div class="card" style="grid-column: span 12;">
+                    <div class="card-title">バックアップ・リカバリ設定</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
+                        <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 6px;">
+                            <div style="color: #94a3b8; margin-bottom: 0.5rem;">自動バックアップ</div>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #22c55e;">有効</div>
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem;">6時間ごと実行</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 6px;">
+                            <div style="color: #94a3b8; margin-bottom: 0.5rem;">最終バックアップ</div>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #2d9d78;">2時間前</div>
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem;">成功</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 6px;">
+                            <div style="color: #94a3b8; margin-bottom: 0.5rem;">バックアップ保持数</div>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #2d9d78;">168個</div>
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem;">過去30日分</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 6px;">
+                            <div style="color: #94a3b8; margin-bottom: 0.5rem;">リカバリポイント</div>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #2d9d78;">RPO: 6h</div>
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem;">RTO: 30min</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // アニメーション用の変数
+        let animationFrame = 0;
+        let charts = {};
+        
+        // 初期化
+        window.addEventListener('load', () => {
+            // 少し遅延させてから初期化（DOMが完全にレンダリングされるまで待つ）
+            setTimeout(() => {
+                initDashboard();
+                startAnimations();
+            }, 100);
+        });
+
+        // ナビゲーション
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+                
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                document.querySelectorAll('.subpage').forEach(p => p.classList.remove('active'));
+                document.getElementById(`page-${page}`).classList.add('active');
+                
+                // ページ切り替え時にグラフを再初期化
+                setTimeout(() => {
+                    initChart();
+                    Object.values(charts).forEach(chart => {
+                        if (chart && chart.canvas && chart.canvas.offsetWidth > 0) {
+                            chart.canvas.width = chart.canvas.offsetWidth;
+                            chart.canvas.height = chart.canvas.offsetHeight;
+                            drawChart(chart);
+                        }
+                    });
+                }, 50);
+            });
+        });
+
+        // ダッシュボード初期化
+        function initDashboard() {
+            updateAlerts();
+            updateSensors();
+            initPipelineMap();
+            initChart();
+            populateAnalysisTable();
+        }
+
+        // アラート更新
+        function updateAlerts() {
+            const container = document.getElementById('alerts-container');
+            const alerts = [
+                { type: 'critical', location: '配管A-12', message: '腐食率 85% - 即時対応が必要です', blink: true },
+                { type: 'warning', location: '配管B-08', message: '圧力変動検知 - 監視継続中', blink: false },
+                { type: 'normal', location: '配管C-03', message: '正常稼働中', blink: false },
+                { type: 'normal', location: 'タンク01', message: 'すべてのパラメータ正常', blink: false }
+            ];
+
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-status alert-${alert.type} ${alert.blink ? 'blinking' : ''}">
+                    <div class="alert-indicator indicator-${alert.type === 'critical' ? 'red' : alert.type === 'warning' ? 'yellow' : 'green'}"></div>
+                    <div class="alert-info">
+                        <div class="alert-location">${alert.location}</div>
+                        <div class="alert-message">${alert.message}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // センサー更新
+        function updateSensors() {
+            const container = document.getElementById('sensor-list');
+            const sensors = [
+                { name: '圧力センサー P-01', value: 0, unit: 'MPa' },
+                { name: '温度センサー T-01', value: 0, unit: '°C' },
+                { name: '腐食センサー C-01', value: 0, unit: '%' },
+                { name: '流量センサー F-01', value: 0, unit: 'm³/h' },
+                { name: 'NH₃濃度 N-01', value: 0, unit: 'ppm' }
+            ];
+
+            container.innerHTML = sensors.map(sensor => `
+                <div class="sensor-item">
+                    <div class="sensor-name">${sensor.name}</div>
+                    <div class="sensor-value">
+                        <span class="sensor-reading" data-sensor="${sensor.name}">0</span>
+                        <span class="sensor-unit">${sensor.unit}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 配管マップ初期化
+        function initPipelineMap() {
+            const map = document.getElementById('pipeline-map');
+            if (!map) return;
+            
+            map.innerHTML = ''; // クリア
+            
+            // タンク
+            const tanks = [
+                { x: 50, y: 180, width: 80, height: 100, label: 'タンク01\nNH₃ 500t' },
+                { x: 900, y: 180, width: 80, height: 100, label: 'タンク02\nNH₃ 500t' }
+            ];
+            
+            tanks.forEach(tank => {
+                const div = document.createElement('div');
+                div.className = 'tank-label';
+                div.style.left = tank.x + 'px';
+                div.style.top = tank.y + 'px';
+                div.style.width = tank.width + 'px';
+                div.style.height = tank.height + 'px';
+                div.innerHTML = tank.label.replace('\n', '<br>');
+                map.appendChild(div);
+            });
+            
+            // 配管セグメント（修正版 - 接続を正確に）
+            const segments = [
+                // タンク01からメインライン
+                { x: 130, y: 225, width: 120, height: 10, status: 'normal', label: '配管A-01' },
+                
+                // A-12系統（警告 - 腐食率85%）
+                { x: 250, y: 225, width: 10, height: 100, status: 'critical', label: 'A-12' },
+                { x: 260, y: 325, width: 120, height: 10, status: 'normal', label: '配管A-15' },
+                
+                // B-08系統（警告 - 圧力変動）
+                { x: 380, y: 225, width: 10, height: -80, status: 'warning', label: 'B-08' },
+                { x: 390, y: 145, width: 140, height: 10, status: 'normal', label: '配管B-22' },
+                
+                // C-03系統（正常）
+                { x: 530, y: 145, width: 10, height: 80, status: 'normal', label: 'C-03' },
+                { x: 540, y: 225, width: 140, height: 10, status: 'normal', label: '配管C-45' },
+                
+                // D系統
+                { x: 680, y: 225, width: 10, height: 100, status: 'normal', label: 'D-15' },
+                { x: 690, y: 325, width: 210, height: 10, status: 'normal', label: '配管D-28' },
+                
+                // 補助ライン上部
+                { x: 250, y: 185, width: 10, height: 40, status: 'normal', label: '' },
+                { x: 260, y: 185, width: 90, height: 10, status: 'normal', label: '補助A' },
+                
+                // 補助ライン上部2
+                { x: 680, y: 185, width: 10, height: 40, status: 'normal', label: '' },
+                { x: 600, y: 185, width: 80, height: 10, status: 'normal', label: '補助B' },
+                
+                // 接続配管
+                { x: 380, y: 225, width: 160, height: 10, status: 'normal', label: '接続配管E' },
+                { x: 540, y: 225, width: 150, height: 10, status: 'normal', label: '接続配管F' }
+            ];
+
+            segments.forEach((seg, i) => {
+                const div = document.createElement('div');
+                div.className = `pipeline-segment ${seg.status}`;
+                
+                // 座標計算
+                let left = seg.x;
+                let top = seg.y;
+                let width = Math.abs(seg.width);
+                let height = Math.abs(seg.height);
+                
+                if (seg.height < 0) {
+                    top = seg.y + seg.height;
+                }
+                
+                div.style.left = left + 'px';
+                div.style.top = top + 'px';
+                div.style.width = width + 'px';
+                div.style.height = height + 'px';
+                map.appendChild(div);
+                
+                // ラベル追加
+                if (seg.label) {
+                    const label = document.createElement('div');
+                    label.className = 'pipeline-label';
+                    if (Math.abs(seg.width) > Math.abs(seg.height)) {
+                        // 横向き配管
+                        label.style.left = (left + width / 2 - 25) + 'px';
+                        label.style.top = (top - 18) + 'px';
+                    } else {
+                        // 縦向き配管
+                        label.style.left = (left + 18) + 'px';
+                        label.style.top = (top + height / 2 - 8) + 'px';
+                    }
+                    label.textContent = seg.label;
+                    map.appendChild(label);
+                }
+            });
+
+            // センサーマーカー（配管に正確に配置）
+            const markers = [
+                // タンク01センサー
+                { x: 122, y: 221, status: 'normal', id: 'T-01', corrosion: '8%', pressure: '1.0 MPa', location: 'タンク01' },
+                
+                // A系統
+                { x: 190, y: 221, status: 'normal', id: 'S-001', corrosion: '28%', pressure: '1.0 MPa', location: '配管A-01' },
+                { x: 246, y: 275, status: 'critical', id: 'S-002', corrosion: '85%', pressure: '1.2 MPa', location: '配管A-12' },
+                { x: 320, y: 321, status: 'normal', id: 'S-003', corrosion: '34%', pressure: '0.9 MPa', location: '配管A-15' },
+                
+                // B系統
+                { x: 376, y: 185, status: 'warning', id: 'S-004', corrosion: '42%', pressure: '0.9 MPa', location: '配管B-08' },
+                { x: 460, y: 141, status: 'normal', id: 'S-005', corrosion: '22%', pressure: '1.0 MPa', location: '配管B-22' },
+                
+                // C系統
+                { x: 526, y: 185, status: 'normal', id: 'S-006', corrosion: '18%', pressure: '1.1 MPa', location: '配管C-03' },
+                { x: 610, y: 221, status: 'normal', id: 'S-007', corrosion: '15%', pressure: '1.2 MPa', location: '配管C-45' },
+                
+                // D系統
+                { x: 676, y: 275, status: 'normal', id: 'S-008', corrosion: '45%', pressure: '0.8 MPa', location: '配管D-15' },
+                { x: 795, y: 321, status: 'normal', id: 'S-009', corrosion: '38%', pressure: '1.0 MPa', location: '配管D-28' },
+                
+                // 補助ライン
+                { x: 305, y: 181, status: 'normal', id: 'S-010', corrosion: '12%', pressure: '1.3 MPa', location: '補助A' },
+                { x: 640, y: 181, status: 'normal', id: 'S-011', corrosion: '56%', pressure: '0.9 MPa', location: '補助B' },
+                
+                // タンク02センサー
+                { x: 892, y: 221, status: 'normal', id: 'T-02', corrosion: '12%', pressure: '1.0 MPa', location: 'タンク02' }
+            ];
+
+            markers.forEach(marker => {
+                const div = document.createElement('div');
+                div.className = `sensor-marker ${marker.status}`;
+                div.style.left = marker.x + 'px';
+                div.style.top = marker.y + 'px';
+                div.dataset.id = marker.id;
+                div.dataset.corrosion = marker.corrosion;
+                div.dataset.pressure = marker.pressure;
+                div.dataset.location = marker.location;
+                
+                // ツールチップ
+                div.addEventListener('mouseenter', (e) => {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'sensor-tooltip';
+                    tooltip.innerHTML = `
+                        <strong>${marker.id}</strong> - ${marker.location}<br>
+                        腐食率: <span style="color: ${marker.status === 'critical' ? '#ef4444' : marker.status === 'warning' ? '#fbbf24' : '#22c55e'}">${marker.corrosion}</span><br>
+                        圧力: ${marker.pressure}
+                    `;
+                    tooltip.style.left = (marker.x + 25) + 'px';
+                    tooltip.style.top = (marker.y - 10) + 'px';
+                    tooltip.style.opacity = '1';
+                    map.appendChild(tooltip);
+                    div._tooltip = tooltip;
+                });
+                
+                div.addEventListener('mouseleave', (e) => {
+                    if (div._tooltip) {
+                        div._tooltip.remove();
+                        div._tooltip = null;
+                    }
+                });
+                
+                map.appendChild(div);
+            });
+            
+            // 凡例
+            const legend = document.createElement('div');
+            legend.style.position = 'absolute';
+            legend.style.right = '20px';
+            legend.style.top = '20px';
+            legend.style.background = 'rgba(20, 27, 45, 0.95)';
+            legend.style.padding = '1rem';
+            legend.style.borderRadius = '6px';
+            legend.style.border = '1px solid #1e293b';
+            legend.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+            legend.innerHTML = `
+                <div style="color: #94a3b8; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;">ステータス凡例</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                    <div style="width: 12px; height: 12px; background: #22c55e; border-radius: 50%;"></div>
+                    <span style="color: #e0e6ed; font-size: 0.75rem;">正常（0-60%）</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                    <div style="width: 12px; height: 12px; background: #fbbf24; border-radius: 50%;"></div>
+                    <span style="color: #e0e6ed; font-size: 0.75rem;">注意（61-79%）</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 12px; height: 12px; background: #ef4444; border-radius: 50%;"></div>
+                    <span style="color: #e0e6ed; font-size: 0.75rem;">警告（80%以上）</span>
+                </div>
+            `;
+            map.appendChild(legend);
+        }
+
+        // グラフ初期化
+        function initChart() {
+            // 腐食進行チャート
+            const corrosionCanvas = document.getElementById('corrosion-chart');
+            if (corrosionCanvas && corrosionCanvas.offsetWidth > 0) {
+                const ctx = corrosionCanvas.getContext('2d');
+                corrosionCanvas.width = corrosionCanvas.offsetWidth;
+                corrosionCanvas.height = corrosionCanvas.offsetHeight;
+                charts.corrosion = {
+                    canvas: corrosionCanvas,
+                    ctx: ctx,
+                    data: Array(50).fill(0).map(() => 30 + Math.random() * 30),
+                    maxValue: 100
+                };
+                drawChart(charts.corrosion);
+            }
+
+            // 圧力変動チャート
+            const pressureCanvas = document.getElementById('pressure-chart');
+            if (pressureCanvas && pressureCanvas.offsetWidth > 0) {
+                const ctx = pressureCanvas.getContext('2d');
+                pressureCanvas.width = pressureCanvas.offsetWidth;
+                pressureCanvas.height = pressureCanvas.offsetHeight;
+                charts.pressure = {
+                    canvas: pressureCanvas,
+                    ctx: ctx,
+                    data: Array(50).fill(0).map(() => 0.8 + Math.random() * 0.5),
+                    maxValue: 2.0
+                };
+                drawChart(charts.pressure);
+            }
+
+            // 温度分布チャート
+            const temperatureCanvas = document.getElementById('temperature-chart');
+            if (temperatureCanvas && temperatureCanvas.offsetWidth > 0) {
+                const ctx = temperatureCanvas.getContext('2d');
+                temperatureCanvas.width = temperatureCanvas.offsetWidth;
+                temperatureCanvas.height = temperatureCanvas.offsetHeight;
+                charts.temperature = {
+                    canvas: temperatureCanvas,
+                    ctx: ctx,
+                    data: Array(50).fill(0).map(() => 20 + Math.random() * 8),
+                    maxValue: 50
+                };
+                drawChart(charts.temperature);
+            }
+
+            // 週次トレンドチャート
+            const weeklyCanvas = document.getElementById('weekly-trend-chart');
+            if (weeklyCanvas && weeklyCanvas.offsetWidth > 0) {
+                const ctx = weeklyCanvas.getContext('2d');
+                weeklyCanvas.width = weeklyCanvas.offsetWidth;
+                weeklyCanvas.height = weeklyCanvas.offsetHeight;
+                charts.weekly = {
+                    canvas: weeklyCanvas,
+                    ctx: ctx,
+                    data: Array(7).fill(0).map(() => 5 + Math.random() * 10),
+                    maxValue: 20,
+                    isBar: true
+                };
+                drawChart(charts.weekly);
+            }
+
+            // 相関チャート
+            const correlationCanvas = document.getElementById('correlation-chart');
+            if (correlationCanvas && correlationCanvas.offsetWidth > 0) {
+                const ctx = correlationCanvas.getContext('2d');
+                correlationCanvas.width = correlationCanvas.offsetWidth;
+                correlationCanvas.height = correlationCanvas.offsetHeight;
+                charts.correlation = {
+                    canvas: correlationCanvas,
+                    ctx: ctx,
+                    data: Array(30).fill(0).map(() => ({x: Math.random() * 100, y: Math.random() * 100})),
+                    maxValue: 100,
+                    isScatter: true
+                };
+                drawChart(charts.correlation);
+            }
+
+            // レポートトレンド
+            const reportTrendCanvas = document.getElementById('report-trend-chart');
+            if (reportTrendCanvas && reportTrendCanvas.offsetWidth > 0) {
+                const ctx = reportTrendCanvas.getContext('2d');
+                reportTrendCanvas.width = reportTrendCanvas.offsetWidth;
+                reportTrendCanvas.height = reportTrendCanvas.offsetHeight;
+                charts.reportTrend = {
+                    canvas: reportTrendCanvas,
+                    ctx: ctx,
+                    data: Array(12).fill(0).map(() => 70 + Math.random() * 30),
+                    maxValue: 120,
+                    isBar: true
+                };
+                drawChart(charts.reportTrend);
+            }
+
+            // レポート閲覧
+            const reportViewCanvas = document.getElementById('report-view-chart');
+            if (reportViewCanvas && reportViewCanvas.offsetWidth > 0) {
+                const ctx = reportViewCanvas.getContext('2d');
+                reportViewCanvas.width = reportViewCanvas.offsetWidth;
+                reportViewCanvas.height = reportViewCanvas.offsetHeight;
+                charts.reportView = {
+                    canvas: reportViewCanvas,
+                    ctx: ctx,
+                    data: [45, 30, 15, 10],
+                    maxValue: 100,
+                    isPie: true
+                };
+                drawChart(charts.reportView);
+            }
+        }
+
+        // グラフ描画
+        function drawChart(chart) {
+            if (!chart || !chart.ctx) return;
+            
+            const ctx = chart.ctx;
+            const width = chart.canvas.width;
+            const height = chart.canvas.height;
+            const data = chart.data;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (chart.isPie) {
+                // 円グラフ
+                const total = data.reduce((a, b) => a + b, 0);
+                const colors = ['#2d9d78', '#fbbf24', '#ef4444', '#94a3b8'];
+                const labels = ['日次', '週次', '月次', 'その他'];
+                let currentAngle = -Math.PI / 2;
+                
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2 - 40;
+
+                data.forEach((value, i) => {
+                    const sliceAngle = (value / total) * 2 * Math.PI;
+                    
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
+                    ctx.lineTo(centerX, centerY);
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fill();
+                    
+                    // ラベルと値を追加
+                    const labelAngle = currentAngle + sliceAngle / 2;
+                    const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+                    const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(labels[i], labelX, labelY - 8);
+                    ctx.fillText(value + '%', labelX, labelY + 8);
+                    
+                    currentAngle += sliceAngle;
+                });
+                return;
+            }
+
+            if (chart.isScatter) {
+                // グリッド
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    const y = (height / 4) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                    
+                    const x = (width / 4) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, height);
+                    ctx.stroke();
+                }
+                
+                // 軸ラベル
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                for (let i = 0; i <= 4; i++) {
+                    const y = (height / 4) * i;
+                    const value = chart.maxValue - (chart.maxValue / 4) * i;
+                    ctx.fillText(value.toFixed(0), width - 5, y + 4);
+                }
+                
+                // 散布図
+                ctx.fillStyle = '#2d9d78';
+                data.forEach(point => {
+                    const x = (point.x / chart.maxValue) * width;
+                    const y = height - (point.y / chart.maxValue) * height;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                return;
+            }
+
+            if (chart.isBar) {
+                // 棒グラフ
+                const barWidth = width / data.length * 0.7;
+                const gap = width / data.length * 0.3;
+                
+                // グリッド
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 4; i++) {
+                    const y = (height / 4) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(width, y);
+                    ctx.stroke();
+                    
+                    // Y軸の値
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '11px Inter, sans-serif';
+                    ctx.textAlign = 'left';
+                    const value = chart.maxValue - (chart.maxValue / 4) * i;
+                    ctx.fillText(value.toFixed(0), 5, y - 5);
+                }
+                
+                data.forEach((value, i) => {
+                    const x = i * (barWidth + gap) + gap / 2;
+                    const barHeight = (value / chart.maxValue) * height;
+                    const y = height - barHeight;
+                    
+                    ctx.fillStyle = '#2d9d78';
+                    ctx.fillRect(x, y, barWidth, barHeight);
+                    
+                    // 値をバーの上に表示
+                    ctx.fillStyle = '#e0e6ed';
+                    ctx.font = 'bold 12px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(value.toFixed(0), x + barWidth / 2, y - 5);
+                });
+                return;
+            }
+
+            // 折れ線グラフ
+            // グリッド
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = (height / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+                
+                // Y軸の値
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                const value = chart.maxValue - (chart.maxValue / 4) * i;
+                ctx.fillText(value.toFixed(1), 5, y - 5);
+            }
+
+            // データライン
+            ctx.strokeStyle = '#2d9d78';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            const xStep = width / (data.length - 1);
+            data.forEach((value, i) => {
+                const x = i * xStep;
+                const y = height - (value / chart.maxValue) * height;
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+
+            // エリア塗りつぶし
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(45, 157, 120, 0.15)';
+            ctx.fill();
+            
+            // 現在値を表示
+            const lastValue = data[data.length - 1];
+            const lastX = (data.length - 1) * xStep;
+            const lastY = height - (lastValue / chart.maxValue) * height;
+            
+            // ポイント
+            ctx.fillStyle = '#2d9d78';
+            ctx.beginPath();
+            ctx.arc(lastX, lastY, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 値ラベル
+            ctx.fillStyle = '#e0e6ed';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(lastValue.toFixed(1), lastX - 10, lastY - 10);
+        }
+
+        // 解析テーブル生成
+        function populateAnalysisTable() {
+            const tbody = document.getElementById('analysis-table');
+            const data = [
+                { id: 'S-001', location: '配管A-12', corrosion: '85%', pressure: '1.2 MPa', temp: '25°C', nh3: '8 ppm', vibration: '2.3 mm/s', status: '警告', confidence: '99.2%', lastCheck: '2時間前' },
+                { id: 'S-002', location: '配管B-08', corrosion: '42%', pressure: '0.9 MPa', temp: '23°C', nh3: '3 ppm', vibration: '1.8 mm/s', status: '正常', confidence: '98.7%', lastCheck: '1日前' },
+                { id: 'S-003', location: '配管C-03', corrosion: '18%', pressure: '1.1 MPa', temp: '24°C', nh3: '2 ppm', vibration: '1.5 mm/s', status: '正常', confidence: '99.5%', lastCheck: '3時間前' },
+                { id: 'S-004', location: 'タンク01', corrosion: '12%', pressure: '1.0 MPa', temp: '22°C', nh3: '1 ppm', vibration: '0.8 mm/s', status: '正常', confidence: '99.8%', lastCheck: '12時間前' },
+                { id: 'S-005', location: '配管D-15', corrosion: '67%', pressure: '0.8 MPa', temp: '26°C', nh3: '12 ppm', vibration: '3.1 mm/s', status: '注意', confidence: '97.4%', lastCheck: '30分前' },
+                { id: 'S-006', location: '配管E-22', corrosion: '34%', pressure: '1.3 MPa', temp: '21°C', nh3: '4 ppm', vibration: '1.9 mm/s', status: '正常', confidence: '98.9%', lastCheck: '5時間前' },
+                { id: 'S-007', location: 'タンク02', corrosion: '28%', pressure: '1.0 MPa', temp: '23°C', nh3: '2 ppm', vibration: '1.2 mm/s', status: '正常', confidence: '99.1%', lastCheck: '8時間前' },
+                { id: 'S-008', location: '配管F-07', corrosion: '72%', pressure: '1.1 MPa', temp: '27°C', nh3: '15 ppm', vibration: '3.8 mm/s', status: '注意', confidence: '96.8%', lastCheck: '1時間前' },
+                { id: 'S-009', location: '配管G-19', corrosion: '45%', pressure: '0.9 MPa', temp: '24°C', nh3: '5 ppm', vibration: '2.1 mm/s', status: '正常', confidence: '98.3%', lastCheck: '4時間前' },
+                { id: 'S-010', location: '配管H-31', corrosion: '56%', pressure: '1.2 MPa', temp: '25°C', nh3: '7 ppm', vibration: '2.7 mm/s', status: '正常', confidence: '97.9%', lastCheck: '6時間前' }
+            ];
+
+            tbody.innerHTML = data.map(row => `
+                <tr>
+                    <td>${row.id}</td>
+                    <td>${row.location}</td>
+                    <td style="color: ${parseInt(row.corrosion) >= 80 ? '#ef4444' : parseInt(row.corrosion) >= 60 ? '#fbbf24' : '#22c55e'}; font-weight: 600;">${row.corrosion}</td>
+                    <td>${row.pressure}</td>
+                    <td>${row.temp}</td>
+                    <td>${row.nh3}</td>
+                    <td>${row.vibration}</td>
+                    <td style="color: ${row.status === '警告' ? '#ef4444' : row.status === '注意' ? '#fbbf24' : '#22c55e'}; font-weight: 600;">${row.status}</td>
+                    <td style="color: ${parseFloat(row.confidence) >= 99 ? '#22c55e' : parseFloat(row.confidence) >= 97 ? '#fbbf24' : '#ef4444'}">${row.confidence}</td>
+                    <td>${row.lastCheck}</td>
+                </tr>
+            `).join('');
+        }
+
+        // レポート生成
+        function generateReport(type) {
+            const output = document.getElementById('report-output');
+            const titles = {
+                daily: '日次監視レポート',
+                weekly: '週次分析レポート',
+                monthly: '月次総合レポート',
+                compliance: 'コンプライアンスレポート'
+            };
+
+            const now = new Date();
+            const date = now.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const time = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            
+            // レポート期間の設定
+            let period = '';
+            if (type === 'daily') {
+                period = date;
+            } else if (type === 'weekly') {
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                period = `${weekAgo.toLocaleDateString('ja-JP')} ～ ${date}`;
+            } else if (type === 'monthly') {
+                period = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+            } else if (type === 'compliance') {
+                const quarter = Math.floor(now.getMonth() / 3) + 1;
+                period = `${now.getFullYear()}年 第${quarter}四半期`;
+            }
+            
+            output.innerHTML = `
+                <div class="report-header">
+                    <div class="report-title">${titles[type]}</div>
+                    <div class="report-meta">
+                        生成日時: ${date} ${time} | 
+                        対象期間: ${period} | 
+                        システム: グリーンNH₃監視システム v3.2.8
+                    </div>
+                </div>
+                <div class="report-content">
+                    <div class="report-section-title">エグゼクティブサマリー</div>
+                    <p style="color: #e0e6ed; line-height: 1.8;">
+                        本レポートは、AI腐食・漏えい監視システムによる自動生成レポートです。
+                        高圧ガス保安法に準拠した監視データを基に、設備の健全性を評価しています。
+                        ${type === 'compliance' ? 'コンプライアンス監査に必要な全データを網羅しています。' : ''}
+                    </p>
+
+                    <div class="report-section-title">主要指標</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value">128</div>
+                            <div class="stat-label">監視センサー数</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">98.4%</div>
+                            <div class="stat-label">AI検知精度</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">3.2秒</div>
+                            <div class="stat-label">平均応答時間</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${type === 'daily' ? '7件' : type === 'weekly' ? '42件' : '178件'}</div>
+                            <div class="stat-label">検知件数</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${type === 'daily' ? '2件' : type === 'weekly' ? '8件' : '24件'}</div>
+                            <div class="stat-label">事故防止件数</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">99.2%</div>
+                            <div class="stat-label">稼働率</div>
+                        </div>
+                    </div>
+
+                    <div class="report-section-title">重要検知事項</div>
+                    <p style="color: #e0e6ed; line-height: 1.8;">
+                        <strong style="color: #ef4444;">【緊急】</strong> 配管A-12: 腐食率85%到達により即時点検を推奨<br>
+                        <strong style="color: #fbbf24;">【警告】</strong> 配管B-08: 圧力変動パターンを検知、継続監視中<br>
+                        <strong style="color: #22c55e;">【正常】</strong> 全システム: 異常な漏えいは検知されていません<br>
+                        <strong style="color: #22c55e;">【正常】</strong> タンク01・02: すべてのパラメータが正常範囲内
+                    </p>
+
+                    <div class="report-section-title">推奨アクション</div>
+                    <p style="color: #e0e6ed; line-height: 1.8;">
+                        <strong>即時対応が必要：</strong><br>
+                        • 配管A-12の緊急点検および交換計画の策定（推奨期限: 7日以内）<br>
+                        • センサーS-002周辺の詳細調査<br>
+                        <br>
+                        <strong>30日以内の対応推奨：</strong><br>
+                        • 配管B-08の圧力測定精度検証<br>
+                        • センサーS-001〜S-011の定期キャリブレーション実施<br>
+                        <br>
+                        <strong>継続的な改善：</strong><br>
+                        • AI学習モデルの精度向上のためのデータ蓄積継続<br>
+                        • 予測保全アルゴリズムの調整
+                    </p>
+
+                    ${type === 'compliance' ? `
+                    <div class="report-section-title">法令準拠状況</div>
+                    <p style="color: #e0e6ed; line-height: 1.8;">
+                        <strong>高圧ガス保安法 準拠状況：</strong><br>
+                        • 定期点検記録: 完備（100%）<br>
+                        • 自動報告: すべて期限内に実施（12件）<br>
+                        • 監査適合率: 100%<br>
+                        • 次回法定点検: 18日後<br>
+                        <br>
+                        <strong>その他の法令：</strong><br>
+                        • 労働安全衛生法: 準拠<br>
+                        • 消防法: 準拠<br>
+                        • 環境基本法: 準拠
+                    </p>
+                    ` : ''}
+
+                    <div class="report-section-title">データ品質</div>
+                    <p style="color: #e0e6ed; line-height: 1.8;">
+                        • センサーデータ収集率: 99.8%<br>
+                        • データ欠損率: 0.2%<br>
+                        • 誤検知率: 1.6%<br>
+                        • システム稼働率: 99.2%
+                    </p>
+
+                    <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #1e293b; color: #94a3b8; font-size: 0.85rem;">
+                        このレポートは自動生成されました。詳細な分析や追加情報が必要な場合は、担当者にお問い合わせください。<br>
+                        レポートID: RPT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*10000)}
+                    </div>
+                </div>
+            `;
+            
+            output.classList.add('show');
+            
+            // レポートデータを保存
+            window.currentReport = {
+                type: type,
+                title: titles[type],
+                period: period,
+                generatedAt: `${date} ${time}`,
+                content: output.innerHTML
+            };
+        }
+
+        // PDF出力
+        function exportReport() {
+            if (!window.currentReport) {
+                alert('レポートを先に生成してください。');
+                return;
+            }
+            
+            // レポートのHTML内容を取得
+            const reportContent = window.currentReport.content;
+            const title = window.currentReport.title;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+            
+            // HTMLからテキストを抽出してダウンロード用に整形
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = reportContent;
+            const textContent = tempDiv.textContent || tempDiv.innerText;
+            
+            // テキストファイルとしてダウンロード（PDFの代替）
+            const blob = new Blob([
+                `${title}\n`,
+                `生成日時: ${window.currentReport.generatedAt}\n`,
+                `対象期間: ${window.currentReport.period}\n`,
+                `\n`,
+                `${'='.repeat(60)}\n`,
+                `\n`,
+                textContent,
+                `\n`,
+                `${'='.repeat(60)}\n`,
+                `\n`,
+                `※ このファイルはデモ版で生成されたテキスト形式のレポートです。\n`,
+                `※ 本番環境ではPDF形式で出力されます。\n`
+            ], { type: 'text/plain;charset=utf-8' });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}_${timestamp}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // 成功メッセージ
+            showNotification('レポートをダウンロードしました', 'success');
+        }
+
+        // 通知表示
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.padding = '1rem 1.5rem';
+            notification.style.borderRadius = '6px';
+            notification.style.color = '#ffffff';
+            notification.style.fontWeight = '600';
+            notification.style.zIndex = '10000';
+            notification.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+            notification.style.animation = 'slideIn 0.3s ease-out';
+            
+            if (type === 'success') {
+                notification.style.background = 'linear-gradient(135deg, #1a7a5e 0%, #2d9d78 100%)';
+            } else if (type === 'error') {
+                notification.style.background = 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)';
+            } else {
+                notification.style.background = 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // アニメーション用CSS追加
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // アニメーション開始
+        function startAnimations() {
+            // 現在日時を更新
+            function updateDateTime() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('current-datetime').textContent = 
+                    `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            }
+            
+            // 1秒ごとに日時を更新
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+
+            setInterval(() => {
+                animationFrame++;
+
+                // メトリクス更新
+                animateValue('metric-detection', 7, 12, 2000);
+                animateValue('metric-response', 2.8, 3.5, 2000, 's');
+                animateValue('metric-accuracy', 96, 99, 2000, '%');
+                animateValue('metric-prevention', 0, 2, 2000);
+
+                // 変化率更新
+                updateChange('change-detection', 8);
+                updateChange('change-response', -12);
+                updateChange('change-accuracy', 2);
+                updateChange('change-prevention', 15);
+
+                // センサー値更新
+                updateSensorValue('圧力センサー P-01', 0.8, 1.3);
+                updateSensorValue('温度センサー T-01', 20, 28);
+                updateSensorValue('腐食センサー C-01', 35, 65);
+                updateSensorValue('流量センサー F-01', 45, 75);
+                updateSensorValue('NH₃濃度 N-01', 0, 15);
+
+                // グラフ更新
+                updateChartData();
+
+                // 更新時刻
+                document.getElementById('last-update').textContent = Math.floor(Math.random() * 5) + 1 + '秒前';
+
+            }, 2000);
+        }
+
+        // 値のアニメーション
+        function animateValue(elementId, min, max, duration, suffix = '') {
+            const element = document.getElementById(elementId);
+            const targetValue = (Math.random() * (max - min) + min).toFixed(suffix === '%' || suffix === '' ? 1 : 1);
+            const startValue = parseFloat(element.textContent) || 0;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentValue = startValue + (targetValue - startValue) * progress;
+                element.textContent = currentValue.toFixed(suffix === '%' || suffix === '' ? 0 : 1) + suffix;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // 変化率更新
+        function updateChange(elementId, baseValue) {
+            const element = document.getElementById(elementId);
+            const variation = (Math.random() - 0.5) * 4;
+            const value = (baseValue + variation).toFixed(1);
+            const isPositive = parseFloat(value) > 0;
+            
+            element.textContent = (isPositive ? '+' : '') + value + '%';
+            element.className = 'metric-change ' + (isPositive ? 'change-positive' : 'change-negative');
+        }
+
+        // センサー値更新
+        function updateSensorValue(sensorName, min, max) {
+            const element = document.querySelector(`[data-sensor="${sensorName}"]`);
+            if (element) {
+                const value = (Math.random() * (max - min) + min).toFixed(1);
+                
+                const startValue = parseFloat(element.textContent) || 0;
+                const targetValue = parseFloat(value);
+                const startTime = performance.now();
+
+                function update(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / 1000, 1);
+                    const currentValue = startValue + (targetValue - startValue) * progress;
+                    element.textContent = currentValue.toFixed(1);
+
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    }
+                }
+
+                requestAnimationFrame(update);
+            }
+        }
+
+        // グラフデータ更新
+        function updateChartData() {
+            // 腐食進行
+            if (charts.corrosion) {
+                charts.corrosion.data.shift();
+                charts.corrosion.data.push(30 + Math.random() * 40 + Math.sin(animationFrame * 0.1) * 15);
+                drawChart(charts.corrosion);
+            }
+
+            // 圧力変動
+            if (charts.pressure) {
+                charts.pressure.data.shift();
+                charts.pressure.data.push(0.9 + Math.random() * 0.4 + Math.sin(animationFrame * 0.15) * 0.1);
+                drawChart(charts.pressure);
+            }
+
+            // 温度分布
+            if (charts.temperature) {
+                charts.temperature.data.shift();
+                charts.temperature.data.push(22 + Math.random() * 6 + Math.sin(animationFrame * 0.08) * 2);
+                drawChart(charts.temperature);
+            }
+
+            // その他のチャートも初回描画
+            if (charts.weekly && animationFrame % 10 === 0) {
+                drawChart(charts.weekly);
+            }
+            if (charts.correlation && animationFrame % 15 === 0) {
+                drawChart(charts.correlation);
+            }
+            if (charts.reportTrend) {
+                drawChart(charts.reportTrend);
+            }
+            if (charts.reportView) {
+                drawChart(charts.reportView);
+            }
+        }
+    </script>
+</body>
+</html>
